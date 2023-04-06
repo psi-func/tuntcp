@@ -1,4 +1,6 @@
-use etherparse;
+#![deny(clippy::pedantic)]
+#![deny(clippy::all)]
+
 use std::collections::HashMap;
 use std::io;
 use std::net::Ipv4Addr;
@@ -14,7 +16,7 @@ struct Quad {
 
 fn main() -> io::Result<()> {
     let nic = Iface::new("tun0", Mode::Tun)?;
-    let mut connections: HashMap<Quad, tcp::State> = Default::default();
+    let mut connections= HashMap::<Quad, tcp::Connection>::default();
     let mut buf = [0_u8; 1504];
 
     loop {
@@ -47,7 +49,7 @@ fn main() -> io::Result<()> {
                                 dst: (dst, tcph.destination_port()),
                             })
                             .or_default()
-                            .on_packet(iph, tcph, &buf[datai..nbytes]);
+                            .on_packet(&nic, iph, tcph, &buf[datai..nbytes])?;
                     }
                     Err(e) => {
                         eprintln!("Some weird tcp packet: {e}");
